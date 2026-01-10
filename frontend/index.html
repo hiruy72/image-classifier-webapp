@@ -424,18 +424,11 @@
     <div class="container">
         <header>
             <h1>🤖 AI Image Classifier</h1>
-            <p>ResNet18 Model trained on CIFAR-10 Dataset</p>
+            <p>ResNet18 Model trained on specialized 3-class CIFAR-10 subset</p>
             <div class="class-badges">
-                <span class="badge">✈️ Airplane</span>
                 <span class="badge">🚗 Automobile</span>
                 <span class="badge">🐦 Bird</span>
-                <span class="badge">🐱 Cat</span>
-                <span class="badge">🦌 Deer</span>
-                <span class="badge">🐕 Dog</span>
-                <span class="badge">🐸 Frog</span>
-                <span class="badge">🐴 Horse</span>
                 <span class="badge">🚢 Ship</span>
-                <span class="badge">🚛 Truck</span>
             </div>
         </header>
 
@@ -481,7 +474,7 @@
         </main>
 
         <footer>
-            <p>ResNet18 + CIFAR-10 | Powered by PyTorch & FastAPI | <a href="/docs" target="_blank">📚 API Docs</a> | <a href="/health" target="_blank">❤️ Health</a></p>
+            <p>ResNet18 + 3-Class CIFAR-10 | Powered by PyTorch & FastAPI | <a href="/docs" target="_blank">📚 API Docs</a> | <a href="/health" target="_blank">❤️ Health</a></p>
         </footer>
     </div>
 
@@ -647,18 +640,11 @@
                 const div = document.createElement('div');
                 div.className = `prediction-item ${isTop ? 'top' : ''}`;
                 
-                // Get class icon for CIFAR-10
+                // Get class icon for 3-class model
                 const classIcons = {
-                    'airplane': '✈️',
                     'automobile': '🚗',
                     'bird': '🐦',
-                    'cat': '🐱',
-                    'deer': '🦌',
-                    'dog': '🐕',
-                    'frog': '🐸',
-                    'horse': '🐴',
-                    'ship': '🚢',
-                    'truck': '🚛'
+                    'ship': '🚢'
                 };
                 
                 const icon = classIcons[prediction.class] || '❓';
@@ -690,7 +676,7 @@
                         </div>
                         <div class="model-detail">
                             <span class="label">Dataset:</span>
-                            <span class="value">CIFAR-10</span>
+                            <span class="value">CIFAR-10 (3-class subset)</span>
                         </div>
                         <div class="model-detail">
                             <span class="label">Classes:</span>

@@ -1,51 +1,46 @@
-# 🤖 AI Image Classification Web Application
+# 🤖 CIFAR-10 Image Classification Web Application
 
-A production-ready end-to-end machine learning system that automatically trains and serves image classification models using the **CIFAR-10 dataset**.
+A production-ready machine learning system that classifies images into **3 specialized categories** using a ResNet18 model trained on CIFAR-10 data.
 
 ## 🎯 Overview
 
 This application:
-- Uses the famous CIFAR-10 dataset with 60,000 images
-- Trains a deep learning model using transfer learning
+- Classifies images into automobiles, birds, and ships
+- Uses ResNet18 with transfer learning from ImageNet
 - Serves predictions through a FastAPI backend
-- Provides a modern web interface for image classification
+- Provides a modern web interface for real-time classification
+- Automatically downloads and processes CIFAR-10 dataset
 
-## 📊 CIFAR-10 Classes
+## 📊 Classification Classes
 
-The model classifies images into 10 categories:
+The model predicts one of 3 categories:
 
 | Class | Icon | Description |
 |-------|------|-------------|
-| **Airplane** | ✈️ | Aircraft, planes |
-| **Automobile** | 🚗 | Cars, vehicles |
-| **Bird** | 🐦 | Flying birds |
-| **Cat** | 🐱 | Domestic cats |
-| **Deer** | 🦌 | Wild deer |
-| **Dog** | 🐕 | Domestic dogs |
-| **Frog** | 🐸 | Amphibians |
-| **Horse** | 🐴 | Horses |
-| **Ship** | 🚢 | Boats, ships |
-| **Truck** | 🚛 | Large vehicles |
+| **Automobile** | 🚗 | Cars, vehicles, automobiles |
+| **Bird** | 🐦 | Flying birds, avian species |
+| **Ship** | 🚢 | Boats, ships, watercraft |
 
 ## 📁 Project Structure
 
 ```
-image-classification-app/
-├── dataset/                 # Training images (auto-detected)
-│   ├── animal/             # Animal images
-│   ├── human/              # Human images  
-│   └── house/              # House images
+cifar10-classifier/
+├── cifar10_data/           # CIFAR-10 dataset (auto-downloaded)
+│   └── cifar-10-batches-py/
 ├── models/                 # Trained models
-│   ├── model.pth          # PyTorch model
-│   └── class_names.json   # Class mapping
+│   ├── model.pth          # PyTorch model weights
+│   ├── class_names.json   # Class mapping
+│   └── training_curves.png # Training visualization
 ├── api/                   # FastAPI backend
 │   └── main.py           # API server
-├── training/             # Training scripts
-│   └── train.py         # Model training
-├── frontend/            # Web interface
-│   └── index.html      # Frontend UI
-├── requirements.txt    # Dependencies
-└── README.md          # This file
+├── training/              # Training scripts
+│   └── cifar10_train.py  # Model training
+├── frontend/              # Web interface
+│   └── index.html        # Frontend UI
+├── test_api.py           # API testing
+├── requirements.txt      # Dependencies
+├── Dockerfile           # Container setup
+└── README.md           # This file
 ```
 
 ## 🚀 Quick Start
@@ -55,66 +50,44 @@ image-classification-app/
 pip install -r requirements.txt
 ```
 
-### 2. Prepare Dataset
-Create the dataset structure and add your images:
+### 2. Train the Model
+The training script automatically downloads CIFAR-10 data:
 ```bash
-mkdir -p dataset/{animal,human,house}
-# Add your images to respective folders
+python training/cifar10_train.py
 ```
 
-### 3. Train the Model
-```bash
-python training/train.py
-```
-
-### 4. Start the API Server
+### 3. Start the API Server
 ```bash
 python api/main.py
 ```
 
-### 5. Access the Application
+### 4. Access the Application
 - **Web Interface**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
 
-## 📚 Dataset Instructions
+## 🎓 Training Process
 
-### Folder Structure
-Place your training images in the following structure:
-```
-dataset/
-├── animal/
-│   ├── cat1.jpg
-│   ├── dog1.png
-│   └── bird1.jpeg
-├── human/
-│   ├── person1.jpg
-│   └── group1.png
-└── house/
-    ├── home1.jpg
-    └── apartment1.png
-```
+### Automatic CIFAR-10 Setup
+1. **Data Download**: Automatically downloads CIFAR-10 dataset (170MB)
+2. **Class Filtering**: Extracts only automobile, bird, and ship classes
+3. **Data Preprocessing**: Normalizes and augments images
+4. **Model Training**: Fine-tunes ResNet18 with transfer learning
+5. **Model Export**: Saves trained model and class mappings
 
-### Image Requirements
-- **Formats**: JPG, JPEG, PNG
-- **Size**: Any size (automatically resized to 224×224)
-- **Quality**: Clear, well-lit images work best
-- **Quantity**: Minimum 50 images per class recommended
+### Training Configuration
+- **Dataset**: CIFAR-10 (filtered to 3 classes)
+- **Model**: ResNet18 pre-trained on ImageNet
+- **Input Size**: 32×32×3 (CIFAR-10 native resolution)
+- **Batch Size**: 128
+- **Learning Rate**: 0.001 with scheduler
+- **Epochs**: 50 with early stopping
+- **Augmentation**: Random horizontal flip, rotation, normalization
 
-## 🎓 Training Steps
-
-### Automatic Training Process
-1. **Dataset Detection**: Automatically scans folders and creates class mapping
-2. **Data Loading**: Loads images with augmentation (flip, rotation, normalization)
-3. **Model Creation**: Uses transfer learning with ResNet18
-4. **Training**: Trains with GPU if available, shows progress
-5. **Validation**: Evaluates accuracy and saves best model
-6. **Export**: Saves model.pth and class_names.json
-
-### Manual Training
+### Manual Training Options
 ```bash
 cd training
-python train.py --epochs 20 --batch-size 32 --learning-rate 0.001
+python cifar10_train.py --epochs 50 --batch-size 128 --lr 0.001
 ```
 
 ## 🌐 API Usage
@@ -130,23 +103,34 @@ python api/main.py
 #### Using cURL
 ```bash
 curl -X POST "http://localhost:8000/predict/image" \
-     -H "accept: application/json" \
      -H "Content-Type: multipart/form-data" \
      -F "file=@your_image.jpg"
+```
+
+#### Using Python Test Script
+```bash
+python test_api.py
 ```
 
 #### Response Format
 ```json
 {
   "success": true,
-  "filename": "your_image.jpg",
-  "predicted_class": "animal",
-  "confidence": 0.95,
+  "filename": "car_image.jpg",
+  "predicted_class": "automobile",
+  "confidence": 0.94,
   "top_predictions": [
-    {"class": "animal", "confidence": 0.95},
-    {"class": "human", "confidence": 0.03},
-    {"class": "car", "confidence": 0.02}
-  ]
+    {"class": "automobile", "confidence": 0.94},
+    {"class": "ship", "confidence": 0.04},
+    {"class": "bird", "confidence": 0.02}
+  ],
+  "model_info": {
+    "model_name": "ResNet18",
+    "num_classes": 3,
+    "device": "cuda",
+    "trained_model_available": true
+  },
+  "inference_time": "0.023s"
 }
 ```
 
@@ -157,102 +141,115 @@ curl -X POST "http://localhost:8000/predict/image" \
 | `/predict/image` | POST | Upload image for classification |
 | `/health` | GET | Service health status |
 | `/docs` | GET | Interactive API documentation |
+| `/` | GET | Web interface |
 
 ## 🏗️ Model Architecture
 
-### Transfer Learning Approach
-- **Base Model**: ResNet18 (pre-trained on ImageNet)
-- **Modification**: Replace final layer for 4-class classification
-- **Optimization**: Adam optimizer with learning rate scheduling
-- **Augmentation**: Random horizontal flip, rotation, normalization
+### ResNet18 Transfer Learning
+- **Base Model**: ResNet18 pre-trained on ImageNet
+- **Modification**: Final layer adapted for 3-class output
+- **Input Processing**: Resize to 224×224 for inference
+- **Optimization**: Adam optimizer with learning rate decay
+- **Loss Function**: CrossEntropyLoss
 
-### Training Configuration
-- **Input Size**: 224×224×3
-- **Batch Size**: 32 (adjustable)
-- **Learning Rate**: 0.001 with decay
-- **Epochs**: 20 (early stopping enabled)
-- **Device**: Auto-detects GPU/CPU
+### Performance Metrics
+Expected accuracy on CIFAR-10 test set:
+- **Overall Accuracy**: 85-90%
+- **Automobile**: 88-92%
+- **Bird**: 82-87%
+- **Ship**: 85-90%
 
 ## 🧪 Testing
 
 ### Web Interface Testing
-1. Open http://localhost:8000
-2. Drag and drop an image or click to browse
-3. View prediction results with confidence scores
+1. Open http://localhost:8000 in your browser
+2. Upload an image (JPG, PNG supported)
+3. View real-time classification results
 
 ### API Testing
 ```bash
 # Health check
 curl http://localhost:8000/health
 
-# Image prediction
+# Test with sample image
+python test_api.py
+
+# Manual image test
 curl -X POST "http://localhost:8000/predict/image" \
-     -F "file=@test_image.jpg"
+     -F "file=@sample_image.jpg"
 ```
 
 ## 🚀 Production Deployment
 
-### Docker Support
+### Docker Deployment
 ```bash
-# Build image
-docker build -t image-classifier .
+# Build container
+docker build -t cifar10-classifier .
 
 # Run container
-docker run -p 8000:8000 image-classifier
+docker run -p 8000:8000 cifar10-classifier
 ```
 
-### Performance Optimization
-- **GPU Acceleration**: Automatically uses CUDA if available
-- **Model Caching**: Loads model once at startup
+### Performance Features
+- **GPU Acceleration**: Automatic CUDA detection
+- **Model Caching**: Single model load at startup
 - **Fast Inference**: Optimized preprocessing pipeline
-- **Batch Processing**: Supports multiple image uploads
+- **Error Handling**: Robust error responses
 
 ## 🔧 Configuration
 
 ### Training Parameters
-Edit `training/train.py` to modify:
+Edit `training/cifar10_train.py`:
 ```python
-EPOCHS = 20
-BATCH_SIZE = 32
+EPOCHS = 50
+BATCH_SIZE = 128
 LEARNING_RATE = 0.001
-IMAGE_SIZE = 224
+NUM_CLASSES = 3  # automobile, bird, ship
 ```
 
 ### API Configuration
-Edit `api/main.py` to modify:
+Edit `api/main.py`:
 ```python
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB limit
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png'}
+HOST = "0.0.0.0"
+PORT = 8000
 ```
 
-## 📈 Model Performance
+## 📊 Dataset Information
 
-Expected accuracy with sufficient training data:
-- **Animal Classification**: 90-95%
-- **Human Detection**: 85-92%
-- **Car Recognition**: 88-94%
-- **House Identification**: 85-90%
+### CIFAR-10 Subset
+- **Total Images**: ~15,000 (from original 60,000)
+- **Classes**: 3 (automobile, bird, ship)
+- **Image Size**: 32×32 pixels
+- **Format**: RGB color images
+- **Split**: 80% training, 20% validation
+
+### Class Distribution
+- **Automobile**: ~5,000 images
+- **Bird**: ~5,000 images  
+- **Ship**: ~5,000 images
 
 ## 🛠️ Development
 
 ### Adding New Classes
-1. Create new folder in `dataset/`
-2. Add training images
-3. Retrain model: `python training/train.py`
-4. Restart API server
+To extend beyond the current 3 classes:
+1. Modify `training/cifar10_train.py` to include additional CIFAR-10 classes
+2. Update `NUM_CLASSES` parameter
+3. Retrain the model
+4. Update frontend class icons
 
-### Custom Model Architecture
-Modify `training/train.py` to use different models:
-```python
-# Options: resnet18, resnet50, mobilenet_v2, efficientnet_b0
-model = create_model('resnet18', num_classes=4)
-```
+### Model Improvements
+- Try different architectures (ResNet50, EfficientNet)
+- Experiment with data augmentation
+- Implement ensemble methods
+- Add model quantization for faster inference
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Add your improvements
+2. Create a feature branch (`git checkout -b feature/improvement`)
+3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
 
@@ -262,4 +259,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-**Built with ❤️ using PyTorch, FastAPI, and modern web technologies**
+**Built with PyTorch, FastAPI, and CIFAR-10 dataset**
