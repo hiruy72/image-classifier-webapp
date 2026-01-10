@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .class-badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        main {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-content .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .upload-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .upload-content p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .browse-link {
+            color: #667eea;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .file-info {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .file-size {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #ff3742;
+        }
+
+        .preview-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .preview-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .image-preview {
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .action-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .classify-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .classify-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .classify-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-loader {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section h3 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .predictions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .prediction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .prediction-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .prediction-item.top {
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            border-left-color: #667eea;
+        }
+
+        .prediction-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .class-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #333;
+            text-transform: capitalize;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .class-icon {
+            font-size: 1.5rem;
+        }
+
+        .confidence-bar {
+            width: 200px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .confidence-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .model-info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0e8ff;
+            margin-top: 20px;
+        }
+
+        .model-info h4 {
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .model-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .model-detail .label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .model-detail .value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            opacity: 0.8;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #d63031;
+        }
+
+        .success-message {
+            background: #e6ffe6;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #00b894;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            main {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 40px 15px;
+            }
+            
+            .model-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .class-badges {
+                gap: 10px;
+            }
+            
+            .badge {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Image Classifier</h1>
+            <p>ResNet18 Model trained on CIFAR-10 Dataset</p>
+            <div class="class-badges">
+                <span class="badge">✈️ Airplane</span>
+                <span class="badge">🚗 Automobile</span>
+                <span class="badge">🐦 Bird</span>
+                <span class="badge">🐱 Cat</span>
+                <span class="badge">🦌 Deer</span>
+                <span class="badge">🐕 Dog</span>
+                <span class="badge">🐸 Frog</span>
+                <span class="badge">🐴 Horse</span>
+                <span class="badge">🚢 Ship</span>
+                <span class="badge">🚛 Truck</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drag & Drop Image Here</h3>
+                        <p>or <span class="browse-link">browse files</span></p>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                    </div>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <div class="file-details">
+                        <span class="file-name" id="fileName"></span>
+                        <span class="file-size" id="fileSize"></span>
+                    </div>
+                    <button class="remove-btn" id="removeFile">✕</button>
+                </div>
+            </div>
+
+            <div class="preview-section" id="previewSection">
+                <h3>📸 Image Preview</h3>
+                <div class="image-preview">
+                    <img id="previewImage" alt="Preview">
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button class="classify-btn" id="classifyBtn" disabled>
+                    <span class="btn-text">🔍 Classify Image</span>
+                    <span class="btn-loader" style="display: none;">🔄</span>
+                </button>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <h3>🎯 Classification Results</h3>
+                <div class="predictions" id="predictions"></div>
+                <div class="model-info" id="modelInfo"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>ResNet18 + CIFAR-10 | Powered by PyTorch & FastAPI | <a href="/docs" target="_blank">📚 API Docs</a> | <a href="/health" target="_blank">❤️ Health</a></p>
+        </footer>
+    </div>
+
+    <script>
+        class ImageClassifierApp {
+            constructor() {
+                this.selectedFile = null;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.fileInput = document.getElementById('fileInput');
+                this.fileInfo = document.getElementById('fileInfo');
+                this.fileName = document.getElementById('fileName');
+                this.fileSize = document.getElementById('fileSize');
+                this.removeFile = document.getElementById('removeFile');
+                this.previewSection = document.getElementById('previewSection');
+                this.previewImage = document.getElementById('previewImage');
+                this.classifyBtn = document.getElementById('classifyBtn');
+                this.btnText = document.querySelector('.btn-text');
+                this.btnLoader = document.querySelector('.btn-loader');
+                this.resultsSection = document.getElementById('resultsSection');
+                this.predictions = document.getElementById('predictions');
+                this.modelInfo = document.getElementById('modelInfo');
+            }
+
+            bindEvents() {
+                // File input events
+                this.uploadArea.addEventListener('click', () => this.fileInput.click());
+                this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
+                
+                // Drag and drop events
+                this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+                this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+                this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+                
+                // Remove file event
+                this.removeFile.addEventListener('click', () => this.clearFile());
+                
+                // Classify button event
+                this.classifyBtn.addEventListener('click', () => this.classifyImage());
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.uploadArea.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleFileSelect(files[0]);
+                }
+            }
+
+            handleFileSelect(file) {
+                if (!file) return;
+
+                // Validate file type
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    this.showError('Please select a valid image file (JPG, JPEG, PNG)');
+                    return;
+                }
+
+                // Validate file size (10MB max)
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    this.showError('File size must be less than 10MB');
+                    return;
+                }
+
+                this.selectedFile = file;
+                this.displayFileInfo(file);
+                this.displayPreview(file);
+                this.classifyBtn.disabled = false;
+                this.hideResults();
+            }
+
+            displayFileInfo(file) {
+                this.fileName.textContent = file.name;
+                this.fileSize.textContent = this.formatFileSize(file.size);
+                this.fileInfo.style.display = 'flex';
+                this.uploadArea.style.display = 'none';
+            }
+
+            displayPreview(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.previewImage.src = e.target.result;
+                    this.previewSection.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            clearFile() {
+                this.selectedFile = null;
+                this.fileInput.value = '';
+                this.fileInfo.style.display = 'none';
+                this.uploadArea.style.display = 'block';
+                this.previewSection.style.display = 'none';
+                this.classifyBtn.disabled = true;
+                this.hideResults();
+            }
+
+            async classifyImage() {
+                if (!this.selectedFile) return;
+
+                this.setLoading(true);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', this.selectedFile);
+
+                    const response = await fetch('/predict/image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.displayResults(result);
+                        this.showSuccess(`Classification completed in ${result.inference_time}s`);
+                    } else {
+                        this.showError(result.detail || 'Classification failed');
+                    }
+                } catch (error) {
+                    this.showError('Network error. Please try again.');
+                    console.error('Classification error:', error);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            displayResults(result) {
+                // Display predictions
+                this.predictions.innerHTML = '';
+                result.top_predictions.forEach((prediction, index) => {
+                    const predictionElement = this.createPredictionElement(prediction, index === 0);
+                    this.predictions.appendChild(predictionElement);
+                });
+
+                // Display model info
+                this.displayModelInfo(result.model_info, result.inference_time);
+
+                // Show results section
+                this.resultsSection.style.display = 'block';
+                this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            createPredictionElement(prediction, isTop) {
+                const div = document.createElement('div');
+                div.className = `prediction-item ${isTop ? 'top' : ''}`;
+                
+                // Get class icon for CIFAR-10
+                const classIcons = {
+                    'airplane': '✈️',
+                    'automobile': '🚗',
+                    'bird': '🐦',
+                    'cat': '🐱',
+                    'deer': '🦌',
+                    'dog': '🐕',
+                    'frog': '🐸',
+                    'horse': '🐴',
+                    'ship': '🚢',
+                    'truck': '🚛'
+                };
+                
+                const icon = classIcons[prediction.class] || '❓';
+                const confidencePercent = Math.round(prediction.confidence * 100);
+                
+                div.innerHTML = `
+                    <div class="prediction-details">
+                        <div class="class-name">
+                            <span class="class-icon">${icon}</span>
+                            ${prediction.class}
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                        </div>
+                    </div>
+                    <div class="confidence-text">${confidencePercent}%</div>
+                `;
+                
+                return div;
+            }
+
+            displayModelInfo(modelInfo, inferenceTime) {
+                this.modelInfo.innerHTML = `
+                    <h4>🔧 Model Information</h4>
+                    <div class="model-details">
+                        <div class="model-detail">
+                            <span class="label">Architecture:</span>
+                            <span class="value">${modelInfo.model_name}</span>
+                        </div>
+                        <div class="model-detail">
+                            <span class="label">Dataset:</span>
+                            <span class="value">CIFAR-10</span>
+                        </div>
+                        <div class="model-detail">
+                            <span class="label">Classes:</span>
+                            <span class="value">${modelInfo.num_classes}</span>
+                        </div>
+                        <div class="model-detail">
+                            <span class="label">Device:</span>
+                            <span class="value">${modelInfo.device}</span>
+                        </div>
+                        <div class="model-detail">
+                            <span class="label">Inference Time:</span>
+                            <span class="value">${inferenceTime}s</span>
+                        </div>
+                        <div class="model-detail">
+                            <span class="label">Model Status:</span>
+                            <span class="value">${modelInfo.trained_model_available ? '✅ Trained' : '🎭 Mock'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            setLoading(loading) {
+                this.classifyBtn.disabled = loading;
+                this.btnText.style.display = loading ? 'none' : 'inline';
+                this.btnLoader.style.display = loading ? 'inline' : 'none';
+            }
+
+            hideResults() {
+                this.resultsSection.style.display = 'none';
+                this.clearMessages();
+            }
+
+            showError(message) {
+                this.clearMessages();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = `❌ ${message}`;
+                this.resultsSection.parentNode.insertBefore(errorDiv, this.resultsSection);
+                
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+
+            showSuccess(message) {
+                this.clearMessages();
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.textContent = `✅ ${message}`;
+                this.resultsSection.parentNode.insertBefore(successDiv, this.resultsSection);
+                
+                setTimeout(() => successDiv.remove(), 3000);
+            }
+
+            clearMessages() {
+                const messages = document.querySelectorAll('.error-message, .success-message');
+                messages.forEach(msg => msg.remove());
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageClassifierApp();
+        });
+    </script>
+</body>
+</html>

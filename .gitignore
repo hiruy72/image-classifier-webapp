@@ -1,0 +1,4 @@
+cifar10_data/
+models/*.pth
+__pycache__/
+.env
