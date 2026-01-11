@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""
-CIFAR-10 Image Classification Training Script
-Downloads and trains on the CIFAR-10 dataset with 10 classes.
-"""
+
 
 import torch
 import torch.nn as nn
@@ -18,7 +14,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 class CIFAR10Trainer:
-    """CIFAR-10 image classification trainer."""
+   
     
     def __init__(self, model_name='resnet18', data_dir='cifar10_data'):
         self.model_name = model_name
@@ -27,7 +23,7 @@ class CIFAR10Trainer:
         self.model = None
         self.num_classes = 10
         
-        # Load CIFAR-10 class names from the dataset
+      
         self.class_names = None
         self.class_to_idx = None
         self._load_cifar10_classes()
@@ -35,12 +31,12 @@ class CIFAR10Trainer:
         print(f"🔧 Using device: {self.device}")
         print(f"📊 CIFAR-10 dataset will be loaded automatically")
         
-        # Create models directory
+   
         Path('models').mkdir(exist_ok=True)
     
     def _load_cifar10_classes(self):
         """Load CIFAR-10 class names from the dataset."""
-        # Create a temporary dataset to get class names
+       
         temp_dataset = datasets.CIFAR10(root=self.data_dir, train=False, download=True)
         self.class_names = temp_dataset.classes
         self.class_to_idx = temp_dataset.class_to_idx
@@ -89,14 +85,14 @@ class CIFAR10Trainer:
         """Load CIFAR-10 dataset."""
         print("📦 Loading CIFAR-10 dataset...")
         
-        # Create data directory
+   
         os.makedirs(self.data_dir, exist_ok=True)
         
-        # Get transforms
+   
         train_transform = self.get_transforms(is_training=True)
         test_transform = self.get_transforms(is_training=False)
         
-        # Load datasets
+    
         train_dataset = datasets.CIFAR10(
             root=self.data_dir,
             train=True,
@@ -111,7 +107,7 @@ class CIFAR10Trainer:
             transform=test_transform
         )
         
-        # Create data loaders
+ 
         train_loader = DataLoader(
             train_dataset,
             batch_size=batch_size,
@@ -138,18 +134,18 @@ class CIFAR10Trainer:
         """Train the model on CIFAR-10."""
         print("🚀 Starting CIFAR-10 training...")
         
-        # Load data
+    
         train_loader, test_loader = self.load_cifar10_data(batch_size)
         
-        # Create model
+
         self.model = self.create_model()
         
-        # Loss and optimizer
+      
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
         
-        # Training loop
+    
         train_losses = []
         test_accuracies = []
         best_test_acc = 0.0
@@ -187,7 +183,7 @@ class CIFAR10Trainer:
                         'Acc': f'{100.*correct_train/total_train:.2f}%'
                     })
             
-            # Test phase
+    
             self.model.eval()
             correct_test = 0
             total_test = 0
@@ -205,7 +201,7 @@ class CIFAR10Trainer:
                         'Acc': f'{100.*correct_test/total_test:.2f}%'
                     })
             
-            # Calculate metrics
+    
             epoch_loss = running_loss / len(train_loader)
             train_acc = 100. * correct_train / total_train
             test_acc = 100. * correct_test / total_test
@@ -213,7 +209,7 @@ class CIFAR10Trainer:
             train_losses.append(epoch_loss)
             test_accuracies.append(test_acc)
             
-            # Save best model
+       
             if test_acc > best_test_acc:
                 best_test_acc = test_acc
                 self.save_model('models/model.pth')
@@ -228,14 +224,14 @@ class CIFAR10Trainer:
         
         print(f"✅ Training completed! Best test accuracy: {best_test_acc:.2f}%")
         
-        # Plot training curves
+       
         self.plot_training_curves(train_losses, test_accuracies)
         
         return True
     
     def save_model(self, save_path):
         """Save the trained model and class information."""
-        # Save model checkpoint
+        
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'class_to_idx': self.class_to_idx,
@@ -244,7 +240,7 @@ class CIFAR10Trainer:
             'class_names': self.class_names
         }, save_path)
         
-        # Save class names mapping
+        
         class_info = {
             'class_to_idx': self.class_to_idx,
             'idx_to_class': {str(v): k for k, v in self.class_to_idx.items()},
@@ -296,7 +292,7 @@ def main():
     print("🤖 CIFAR-10 Image Classification Training")
     print("=" * 50)
     
-    # Initialize trainer
+    
     trainer = CIFAR10Trainer(args.model)
     
     # Start training
