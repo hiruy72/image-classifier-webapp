@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-FastAPI Backend for Image Classification
-Serves predictions from trained model with automatic class detection.
-"""
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse
@@ -26,7 +21,7 @@ MODEL_PATH = 'models/model.pth'
 CLASS_NAMES_PATH = 'models/class_names.json'
 
 class ImageClassifier:
-    """Production-ready image classifier with automatic model loading."""
+
     
     def __init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,7 +38,7 @@ class ImageClassifier:
         self._setup_transforms()
     
     def _load_model(self):
-        """Load trained model or create mock classifier."""
+
         try:
             if os.path.exists(MODEL_PATH) and os.path.exists(CLASS_NAMES_PATH):
                 self._load_trained_model()
@@ -54,7 +49,7 @@ class ImageClassifier:
             self._create_mock_classifier()
     
     def _load_trained_model(self):
-        """Load the trained PyTorch model."""
+       
         print("📦 Loading trained model...")
         
         # Load class information
@@ -66,11 +61,11 @@ class ImageClassifier:
         self.num_classes = class_info['num_classes']
         self.class_names = class_info['class_names']
         
-        # Load model checkpoint
+        
         checkpoint = torch.load(MODEL_PATH, map_location=self.device)
         self.model_name = checkpoint.get('model_name', 'resnet18')
         
-        # Create model architecture
+      
         if self.model_name == 'resnet18':
             self.model = models.resnet18(pretrained=False)
             num_features = self.model.fc.in_features
@@ -85,7 +80,7 @@ class ImageClassifier:
             self.model = models.mobilenet_v2(pretrained=False)
             self.model.classifier[1] = nn.Linear(self.model.last_channel, self.num_classes)
         
-        # Load trained weights
+       
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
         self.model.to(self.device)
@@ -94,10 +89,10 @@ class ImageClassifier:
         print(f"Classes: {self.class_names}")
     
     def _create_mock_classifier(self):
-        """Create mock classifier for demo purposes."""
+       
         print("⚠️  No trained model found, using mock classifier")
         
-        # Try to load CIFAR-10 classes from dataset
+       
         try:
             from torchvision import datasets
             temp_dataset = datasets.CIFAR10(root='cifar10_data', train=False, download=False)
@@ -106,7 +101,7 @@ class ImageClassifier:
             self.idx_to_class = {str(idx): name for idx, name in enumerate(self.class_names)}
             print(f"✅ Using CIFAR-10 classes from dataset: {self.class_names}")
         except:
-            # Fallback to default CIFAR-10 classes
+      
             self.class_names = [
                 'airplane', 'automobile', 'bird', 'cat', 'deer',
                 'dog', 'frog', 'horse', 'ship', 'truck'
@@ -133,20 +128,11 @@ class ImageClassifier:
             image = image.convert('RGB')
         
         tensor = self.transform(image)
-        tensor = tensor.unsqueeze(0)  # Add batch dimension
+        tensor = tensor.unsqueeze(0)  
         return tensor.to(self.device)
     
     def predict(self, image: Image.Image, top_k: int = 3) -> Dict[str, Any]:
-        """
-        Predict image class with confidence scores.
-        
-        Args:
-            image: PIL Image object
-            top_k: Number of top predictions to return
-            
-        Returns:
-            Dictionary with prediction results
-        """
+     
         try:
             if self.model is not None:
                 return self._predict_with_model(image, top_k)
@@ -156,19 +142,18 @@ class ImageClassifier:
             raise ValueError(f"Prediction failed: {str(e)}")
     
     def _predict_with_model(self, image: Image.Image, top_k: int = 3) -> Dict[str, Any]:
-        """Make prediction using trained model."""
-        # Preprocess image
+      
         input_tensor = self._preprocess_image(image)
         
-        # Make prediction
+       
         with torch.no_grad():
             outputs = self.model(input_tensor)
             probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
         
-        # Get top-k predictions
+       
         top_prob, top_indices = torch.topk(probabilities, min(top_k, len(self.class_names)))
         
-        # Format results
+       
         top_predictions = []
         for i in range(len(top_indices)):
             class_idx = top_indices[i].item()
@@ -187,16 +172,15 @@ class ImageClassifier:
         }
     
     def _predict_mock(self, image: Image.Image, top_k: int = 3) -> Dict[str, Any]:
-        """Generate mock predictions for demo."""
+       
         import random
         import hashlib
         
-        # Use image hash for consistent predictions
         img_bytes = image.tobytes()
         img_hash = hashlib.md5(img_bytes).hexdigest()
         random.seed(int(img_hash[:8], 16))
         
-        # Generate mock predictions
+        
         predictions = []
         remaining_prob = 1.0
         
@@ -213,7 +197,7 @@ class ImageClassifier:
                 "confidence": round(confidence, 4)
             })
         
-        # Sort by confidence
+       
         predictions.sort(key=lambda x: x["confidence"], reverse=True)
         
         return {
@@ -233,17 +217,16 @@ class ImageClassifier:
             "input_size": "224x224"
         }
 
-# Initialize FastAPI app
+
 app = FastAPI(
     title="AI Image Classification API",
     description="Production-ready image classification for Animals, Humans, Cars, and Houses",
     version="1.0.0"
 )
 
-# Initialize classifier
 classifier = ImageClassifier()
 
-# Mount static files for frontend
+
 try:
     app.mount("/static", StaticFiles(directory="frontend"), name="static")
 except:
@@ -251,7 +234,7 @@ except:
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    """Serve the main web interface."""
+
     try:
         frontend_path = Path("frontend/index.html")
         if frontend_path.exists():
@@ -282,7 +265,7 @@ async def home():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
+ 
     try:
         model_info = classifier.get_model_info()
         return {
@@ -300,20 +283,11 @@ async def health_check():
 
 @app.post("/predict/image")
 async def predict_image(file: UploadFile = File(...)):
-    """
-    Classify an uploaded image.
-    
-    Args:
-        file: Image file (JPG, JPEG, PNG)
-        
-    Returns:
-        JSON response with prediction results
-    """
-    # Validate file
+ 
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
     
-    # Check file extension
+
     file_ext = Path(file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -321,7 +295,7 @@ async def predict_image(file: UploadFile = File(...)):
             detail=f"Unsupported file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
         )
     
-    # Check file size
+
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(
@@ -330,10 +304,10 @@ async def predict_image(file: UploadFile = File(...)):
         )
     
     try:
-        # Load and process image
+  
         image = Image.open(io.BytesIO(contents))
         
-        # Get predictions
+      
         start_time = time.time()
         results = classifier.predict(image, top_k=3)
         inference_time = time.time() - start_time
@@ -356,16 +330,16 @@ async def predict_image(file: UploadFile = File(...)):
 
 @app.exception_handler(413)
 async def request_entity_too_large(request, exc):
-    """Handle file too large errors."""
+    
     return {"error": "File too large", "max_size": f"{MAX_FILE_SIZE // (1024*1024)}MB"}
 
 @app.exception_handler(500)
 async def internal_server_error(request, exc):
-    """Handle internal server errors."""
+    
     return {"error": "Internal server error", "detail": str(exc)}
 
 def main():
-    """Run the FastAPI server."""
+   
     print("🚀 Starting AI Image Classification API")
     print("=" * 50)
     print(f"📊 Model: {classifier.model_name}")
